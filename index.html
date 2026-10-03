@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SDGs性別平權 - 第一關</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif, system-ui;
+            user-select: none;
+            background-color: #2d5a27;
+            overflow-x: hidden;
+        }
+
+        /* 村莊背景圖案與地圖紋理 */
+        .village-bg {
+            background-color: #7ec850;
+            background-image: 
+                radial-gradient(#6eb242 15%, transparent 16%),
+                radial-gradient(#8cd75d 15%, transparent 16%);
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+        }
+
+        /* 茅草屋跳動動畫 */
+        @keyframes hut-bounce {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-8px) scale(1.03); }
+        }
+
+        .animate-hut {
+            animation: hut-bounce 2.5s infinite ease-in-out;
+        }
+
+        .animate-hut:nth-child(even) {
+            animation-delay: 0.5s;
+        }
+
+        .animate-hut:nth-child(3n) {
+            animation-delay: 1.2s;
+        }
+
+        /* 水流動畫 */
+        .river {
+            background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%);
+            opacity: 0.85;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.15);
+        }
+
+        /* 懸停光暈效果 */
+        .hut-card {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .hut-card:hover {
+            transform: scale(1.1) translateY(-5px);
+            filter: drop-shadow(0 12px 15px rgba(0,0,0,0.3));
+        }
+
+        /* 自訂模態框彈出動畫 */
+        @keyframes modal-pop {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-modal {
+            animation: modal-pop 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between select-none relative">
+
+    <!-- 頂部資訊欄 -->
+    <header class="fixed top-0 left-0 right-0 z-30 bg-emerald-900/90 backdrop-blur-md text-white px-4 py-3 shadow-lg flex justify-between items-center border-b-4 border-amber-500">
+        <!-- 左上角標題 -->
+        <div class="flex items-center gap-3">
+            <div class="bg-amber-500 text-emerald-950 p-2 rounded-xl font-extrabold text-lg sm:text-xl shadow">
+                <i class="fa-solid fa-venus-mars"></i>
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-black tracking-wide text-amber-300">SDGs性別平權</h1>
+                <p class="text-xs text-emerald-200 hidden sm:block">永續發展目標 Goal 5：實現性別平等，賦權所有婦女與女孩</p>
+            </div>
+        </div>
+
+        <!-- 右上角答對題數看板 -->
+        <div class="flex items-center gap-2 bg-emerald-950/80 border-2 border-emerald-600 px-4 py-1.5 rounded-2xl shadow-inner">
+            <i class="fa-solid fa-award text-amber-400 text-xl animate-pulse"></i>
+            <span class="text-sm font-bold text-emerald-200">答對題數：</span>
+            <span id="score-text" class="text-xl sm:text-2xl font-black text-amber-300">0</span>
+            <span class="text-sm font-bold text-emerald-400">/ 10</span>
+        </div>
+    </header>
+
+    <!-- 主要遊戲地圖區域 -->
+    <main class="relative w-full flex-grow pt-20 pb-10 min-h-[750px] village-bg overflow-hidden flex items-center justify-center">
+        
+        <!-- 地圖裝飾：河流與小橋 -->
+        <div class="river absolute w-full h-16 sm:h-20 top-1/2 -translate-y-1/2 -rotate-2 border-y-4 border-cyan-200/50 pointer-events-none"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-20 bg-amber-800 rounded-lg border-4 border-amber-950 shadow-2xl z-0 flex items-center justify-center border-x-8 border-x-amber-900">
+            <div class="w-full h-2 bg-amber-950"></div>
+        </div>
+
+        <!-- 地圖裝飾：小路 network -->
+        <svg class="absolute inset-0 w-full h-full pointer-events-none stroke-amber-200/40" stroke-width="8" stroke-dasharray="12 12" fill="none">
+            <path d="M 15% 20% Q 30% 15%, 50% 25% T 85% 20%" />
+            <path d="M 10% 40% Q 25% 45%, 50% 50% T 90% 45%" />
+            <path d="M 15% 80% Q 40% 70%, 50% 75% T 85% 85%" />
+            <path d="M 50% 20% L 50% 80%" />
+        </svg>
+
+        <!-- 地圖裝飾：樹木與花朵 -->
+        <div class="absolute top-24 left-10 text-emerald-800 opacity-80 text-3xl pointer-events-none"><i class="fa-solid fa-tree"></i></div>
+        <div class="absolute top-28 left-20 text-emerald-700 opacity-80 text-2xl pointer-events-none"><i class="fa-solid fa-tree"></i></div>
+        <div class="absolute bottom-12 right-12 text-emerald-800 opacity-80 text-4xl pointer-events-none"><i class="fa-solid fa-tree"></i></div>
+        <div class="absolute top-1/3 right-8 text-emerald-700 opacity-80 text-3xl pointer-events-none"><i class="fa-solid fa-tree"></i></div>
+        <div class="absolute bottom-24 left-1/3 text-pink-400 opacity-90 text-lg pointer-events-none"><i class="fa-solid fa-flower"></i></div>
+        <div class="absolute top-36 right-1/4 text-yellow-300 opacity-90 text-lg pointer-events-none"><i class="fa-solid fa-flower"></i></div>
+
+        <!-- 10 座茅草屋動態容器 -->
+        <div id="huts-container" class="relative z-10 w-full max-w-6xl h-[620px] mx-auto px-4">
+            <!-- 由 JavaScript 動態生成 10 座茅草屋點位 -->
+        </div>
+
+    </main>
+
+    <!-- 答題 Modal 視窗 -->
+    <div id="quiz-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-amber-50 border-4 border-amber-600 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative animate-modal max-h-[90vh] overflow-y-auto">
+            
+            <!-- Modal 頂部標題與按鈕 -->
+            <div class="flex justify-between items-center mb-4 border-b-2 border-amber-200 pb-3">
+                <div class="flex items-center gap-2">
+                    <span id="modal-hut-tag" class="bg-amber-500 text-white font-black px-3 py-1 rounded-full text-sm shadow">
+                        茅草屋 #1
+                    </span>
+                    <h3 class="text-amber-900 font-bold text-lg">性別平權知識考驗</h3>
+                </div>
+                <button onclick="closeQuizModal()" class="text-amber-800 hover:text-amber-950 font-bold text-xl px-2">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- 題目內容 -->
+            <div class="mb-6">
+                <p id="quiz-question" class="text-amber-950 font-bold text-base sm:text-lg leading-relaxed mb-4">
+                    題目載入中...
+                </p>
+                <!-- 選項列表 -->
+                <div id="quiz-options" class="space-y-3">
+                    <!-- 選項將由動態 JS 渲染 -->
+                </div>
+            </div>
+
+            <!-- 回饋與解析說明區 (初始隱藏) -->
+            <div id="quiz-feedback" class="hidden mb-4 p-4 rounded-2xl border-2 text-sm leading-relaxed">
+                <div id="feedback-title" class="font-black text-base mb-1 flex items-center gap-2"></div>
+                <p id="feedback-desc" class="text-gray-800"></p>
+            </div>
+
+            <!-- 確定/提交按鈕 -->
+            <div class="flex justify-end">
+                <button id="modal-next-btn" onclick="confirmAnswer()" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white font-black px-6 py-2.5 rounded-xl shadow-lg transition active:scale-95">
+                    提交答案 <i class="fa-solid fa-paper-plane ml-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 答對獎勵美女圖 Modal -->
+    <div id="reward-modal" class="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-gradient-to-b from-amber-50 to-orange-100 border-4 border-amber-500 rounded-3xl max-w-md w-full p-5 text-center shadow-2xl animate-modal relative overflow-hidden flex flex-col items-center">
+            
+            <!-- 獎勵標頭 -->
+            <div class="flex items-center justify-center gap-2 mb-2">
+                <i class="fa-solid fa-sparkles text-amber-500 text-xl animate-spin"></i>
+                <h3 class="text-2xl font-black text-amber-900">答對獎勵！答得太棒了！</h3>
+                <i class="fa-solid fa-sparkles text-amber-500 text-xl animate-spin"></i>
+            </div>
+            
+            <p class="text-xs font-bold text-amber-700 mb-3">你破除了一個性別刻板印象，獲得一張平權女神卡片！</p>
+
+            <!-- 美女圖展示區 -->
+            <div class="relative w-full h-64 sm:h-72 rounded-2xl overflow-hidden shadow-xl border-4 border-white mb-4 bg-gray-200">
+                <img id="reward-img" src="" alt="獎勵美女圖" class="w-full h-full object-cover object-center transition-transform duration-500 hover:scale-105" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'">
+                <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-left">
+                    <span id="reward-img-caption" class="text-xs font-bold text-amber-200 block">✨ 智慧與自信之美</span>
+                </div>
+            </div>
+
+            <!-- 解析摘要 -->
+            <div class="bg-white/90 border border-amber-300 rounded-xl p-3 text-left text-xs sm:text-sm text-gray-700 mb-4 w-full shadow-inner">
+                <span class="font-bold text-emerald-700 block mb-1"><i class="fa-solid fa-circle-check"></i> 觀念解析：</span>
+                <p id="reward-explanation" class="text-gray-800 leading-snug"></p>
+            </div>
+
+            <!-- 收下獎勵繼續按鈕 -->
+            <button onclick="closeRewardModal()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black py-3 px-6 rounded-xl shadow-lg transition active:scale-95 flex items-center justify-center gap-2 text-base">
+                <i class="fa-solid fa-heart text-pink-300"></i> 收下獎勵繼續探索
+            </button>
+        </div>
+    </div>
+
+    <!-- 結算彈窗 Modal -->
+    <div id="result-modal" class="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white border-4 border-emerald-500 rounded-3xl max-w-md w-full p-6 text-center shadow-2xl animate-modal relative overflow-hidden">
+            
+            <div id="result-icon-container" class="w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center text-5xl shadow-inner">
+                <!-- 圖示由 JS 控制 -->
+            </div>
+
+            <h2 id="result-title" class="text-2xl font-black mb-2 text-gray-800"></h2>
+            <p id="result-score-info" class="text-amber-600 font-bold text-lg mb-3"></p>
+            <p id="result-desc" class="text-gray-600 text-sm mb-6 leading-relaxed px-2"></p>
+
+            <div id="result-actions" class="flex justify-center gap-4">
+                <!-- 按鈕由 JS 動態渲染 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 高解析度 Unsplash 美女圖集（答對時隨機或對應展示）
+        const beautyImages = [
+            {
+                url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+                caption: "✨ 自信俐落與多元平權女神"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80",
+                caption: "🌸 陽光燦爛的溫暖笑容"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80",
+                caption: "💫 展現專業與自信魅力的女性"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=80",
+                caption: "🌟 優雅知性與平權力量"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=800&q=80",
+                caption: "🌺 勇敢追求夢想的職場菁英"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=800&q=80",
+                caption: "✨ 堅毅智慧的領導力風采"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=800&q=80",
+                caption: "🌷 自然清新的自信采風"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=800&q=80",
+                caption: "💎 璀璨動人的科技女傑"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=800&q=80",
+                caption: "🌼 散發無限能量的平權大使"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80",
+                caption: "🚀 勇敢打破框架的現代女性"
+            }
+        ];
+
+        // 性別平權 10 題題庫 (SDG 5 Gender Equality)
+        const questions = [
+            {
+                id: 1,
+                question: "根據聯合國 SDGs 目標 5，關於「家務分工與無償照顧」，下列哪一項才是實現性別平權的正確觀念？",
+                options: [
+                    "無償照顧勞動是女性天生的本分，不需改變",
+                    "應透過公共服務、基礎設施與社會保護政策，承認並重視無償照顧與家務勞動",
+                    "家務事全部交給外傭處理即可，無須家庭成員參與",
+                    "男性只需要負責在外賺錢，完全不需要分擔家務"
+                ],
+                answer: 1,
+                explanation: "SDG 5.4 強調必須承認與重視無償照顧和家務勞動，並提倡家庭內部的責任分擔。"
+            },
+            {
+                id: 2,
+                question: "「同工同酬」是職場平權的重要指標。請問這代表什麼意思？",
+                options: [
+                    "所有人不論工作內容，薪水一律要一模一樣",
+                    "從事相同價值工作或相同職位的員工，不因性別而有薪資差別待遇",
+                    "男性因為需要養家，所以理所當然領比較高的薪水",
+                    "女性因為可能生育，所以起薪較低是合理的市場機制"
+                ],
+                answer: 1,
+                explanation: "同工同酬是指消除職場上的性別薪資差距，凡從事同等價值的工作，皆應給予平等報酬。"
+            },
+            {
+                id: 3,
+                question: "在推動科技（STEM）與教育領域的性別平等中，下列哪項做法最能破除性別刻板印象？",
+                options: [
+                    "鼓勵女孩學習文學，男孩學習工程科技",
+                    "宣導「性別不應限制職業選擇」，鼓勵女孩與婦女參與科學、技術、工程與數學領域",
+                    "限制男性報名護理或幼保相關科系",
+                    "認為男生天生數理比較好，女生語文比較好"
+                ],
+                answer: 1,
+                explanation: "消除對特定性別的學門刻板印象，鼓勵女性參與 STEM 領域，有助於促進科技與教育領域的性別平權。"
+            },
+            {
+                id: 4,
+                question: "關於「消除對婦女與女孩一切形式的暴力與歧視」，下列何者屬於我們日常生活中應有的態度？",
+                options: [
+                    "開具有性別歧視或黃色笑話的玩笑沒關係，只是娛樂",
+                    "遇到職場或校園性騷擾時，要求受害者忍氣吞聲",
+                    "建立尊重個人身體自主權的觀念，對任何形式的性別暴力零容忍",
+                    "認為家庭暴力屬於「家務事」，外人與法律不應干涉"
+                ],
+                answer: 2,
+                explanation: "SDG 5.2 呼籲消除對婦女與女孩的一切暴力與剝削，建立尊重與零容忍的社會氛圍是關鍵。"
+            },
+            {
+                id: 5,
+                question: "促進「女性參與決策與領導力」對社會發展有重大意義，下列敘述何者正確？",
+                options: [
+                    "女性缺乏領導能力，不適合擔任高層主管或國家元首",
+                    "保障女性在政治、經濟及公共領域的領導決策參與，能帶來更多元與包容的政策",
+                    "領導層只需要考慮能力，不需要重視性別代表性與多元性",
+                    "女性擔任領導者會影響家庭和睦"
+                ],
+                answer: 1,
+                explanation: "SDG 5.5 指出應確保女性在政治、經濟及公共生活的各級決策中，擁有充分參與及公平的領導機會。"
+            },
+            {
+                id: 6,
+                question: "當看到學校運動場上「只有男生踢足球、女生在旁邊加油」的現象時，以下何種想法符合性別平權？",
+                options: [
+                    "運動本來就是男生的專長，女生適合靜態活動",
+                    "運動不分性別，應該提供相同的資源與機會，鼓勵所有人參與各式運動",
+                    "女生如果去踢足球會缺乏女性魅力",
+                    "男生如果沒參加體育運動就不夠勇敢"
+                ],
+                answer: 1,
+                explanation: "體育運動與興趣不應受到性別框架限制，每個人都有平等參與各種運動的權利。"
+            },
+            {
+                id: 7,
+                question: "關於「性別氣質」與玩具選擇，下列哪種教育方式最有利於兒童的健康發展？",
+                options: [
+                    "男生只能玩汽車與積木，女生只能玩洋娃娃與廚具",
+                    "如果男生喜歡玩娃娃或女生喜歡玩賽車，應該嚴厲糾正",
+                    "尊重每個孩子的興趣與特質，不以性別規範玩具與學習資源",
+                    "性別氣質不夠陽剛的男生容易被欺負，必須強制改變"
+                ],
+                answer: 2,
+                explanation: "破除玩具與性別的連結，能讓孩子自由探索興趣，培養健全與多元的人格發展。"
+            },
+            {
+                id: 8,
+                question: "下列關於「育嬰留職停薪（育嬰假）」的觀念，何者最符合現代性別平權精神？",
+                options: [
+                    "照顧嬰幼兒是母親的責任，只有女性應該申請育嬰假",
+                    "男性申請育嬰假代表不重視工作，容易影響升遷",
+                    "鼓勵雙親（包含父親與母親）共同承擔育兒責任，建立性別友善的職場與育兒環境",
+                    "企業可以拒絕女性員工的育嬰假申請"
+                ],
+                answer: 2,
+                explanation: "鼓勵父親共同參與育兒與申請育嬰假，有助於落實雙親平等分擔育兒責任與建立友善職場。"
+            },
+            {
+                id: 9,
+                question: "使用資訊與通訊技術（ICT）對促進性別平權有何幫助？",
+                options: [
+                    "科技會加深性別數位落差，對女性毫無幫助",
+                    "透過數位科技與網路，能協助偏鄉婦女獲得教育、經濟資源與創業機會",
+                    "網路世界不需要遵守性別平等的法律規範",
+                    "科技領域只適合男性發展，女性難以從中受益"
+                ],
+                answer: 1,
+                explanation: "SDG 5.b 提倡增強關鍵科技（特別是資訊與通訊技術）的使用，以促進婦女賦權。"
+            },
+            {
+                id: 10,
+                question: "「SDGs 目標 5：性別平權」的主要核心精神是：",
+                options: [
+                    "讓女性擁有高於男性的特權",
+                    "消除所有基於性別的不平等，實現人人享有平等的權利、機會與資源",
+                    "強調男女在所有物理生理條件上完全一模一樣",
+                    "僅關注開發中國家的女性權益，已開發國家不需要努力"
+                ],
+                answer: 1,
+                explanation: "性別平權並非要取代或優越於另一性別，而是讓所有人不論性別都能獲得平等尊重、資源與發展機會。"
+            }
+        ];
+
+        // 10 座茅草屋在 2D 地圖上的相對位置百分比 (%)
+        const hutPositions = [
+            { top: 15, left: 15 },
+            { top: 12, left: 45 },
+            { top: 18, left: 78 },
+            { top: 38, left: 18 },
+            { top: 36, left: 52 },
+            { top: 40, left: 82 },
+            { top: 62, left: 12 },
+            { top: 65, left: 42 },
+            { top: 68, left: 72 },
+            { top: 82, left: 88 }
+        ];
+
+        // 遊戲當前狀態
+        let hutStates = Array(10).fill('unanswered'); // 'unanswered', 'correct', 'incorrect'
+        let answeredCount = 0;
+        let scoreCount = 0;
+        let currentHutIndex = null;
+        let selectedOption = null;
+
+        // 音效合成器
+        const playSound = (type) => {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                if (type === 'correct') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.3);
+                    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.3);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(130, ctx.currentTime + 0.3);
+                    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.3);
+                } else if (type === 'win') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(440, ctx.currentTime);
+                    osc.frequency.setValueAtTime(554.37, ctx.currentTime + 0.1);
+                    osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.2);
+                    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.3);
+                    gain.gain.setValueAtTime(0.4, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.6);
+                }
+            } catch(e) {
+                // 音效播放失敗時優雅忽視
+            }
+        };
+
+        // 初始化並渲染 10 座茅草屋地圖
+        function renderMap() {
+            const container = document.getElementById('huts-container');
+            container.innerHTML = '';
+
+            hutPositions.forEach((pos, index) => {
+                const state = hutStates[index];
+                const hutDiv = document.createElement('div');
+                hutDiv.className = `absolute hut-card cursor-pointer flex flex-col items-center justify-center ${state === 'unanswered' ? 'animate-hut' : ''}`;
+                hutDiv.style.top = `${pos.top}%`;
+                hutDiv.style.left = `${pos.left}%`;
+                hutDiv.onclick = () => openQuizModal(index);
+
+                let roofColor = '#d97706';
+                let houseGlow = 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))';
+                let statusBadge = '';
+
+                if (state === 'correct') {
+                    roofColor = '#059669';
+                    houseGlow = 'drop-shadow(0 0 12px rgba(16, 185, 129, 0.9))';
+                    statusBadge = `
+                        <div class="absolute -top-2 -right-2 bg-emerald-500 text-white w-7 h-7 rounded-full flex items-center justify-center border-2 border-white shadow-lg text-sm font-black">
+                            <i class="fa-solid fa-check"></i>
+                        </div>`;
+                } else if (state === 'incorrect') {
+                    roofColor = '#6b7280';
+                    houseGlow = 'grayscale(80%)';
+                    statusBadge = `
+                        <div class="absolute -top-2 -right-2 bg-rose-500 text-white w-7 h-7 rounded-full flex items-center justify-center border-2 border-white shadow-lg text-sm font-black">
+                            <i class="fa-solid fa-xmark"></i>
+                        </div>`;
+                } else {
+                    statusBadge = `
+                        <div class="absolute -top-3 bg-amber-400 text-amber-950 font-black px-2 py-0.5 rounded-full text-xs shadow border border-amber-200 animate-pulse">
+                            <i class="fa-solid fa-lightbulb"></i> 挑戰
+                        </div>`;
+                }
+
+                hutDiv.innerHTML = `
+                    <div class="relative flex flex-col items-center" style="filter: ${houseGlow}">
+                        ${statusBadge}
+                        <svg width="68" height="68" viewBox="0 0 100 100" class="transition-transform duration-300">
+                            <path d="M 50 10 L 90 45 L 10 45 Z" fill="${roofColor}" stroke="#78350f" stroke-width="4" stroke-linejoin="round"/>
+                            <path d="M 50 10 L 80 45 M 50 10 L 20 45 M 50 10 L 50 45" stroke="#b45309" stroke-width="2"/>
+                            <rect x="20" y="45" width="60" height="45" fill="${state === 'correct' ? '#fef3c7' : '#fde68a'}" stroke="#78350f" stroke-width="4" rx="2"/>
+                            <rect x="42" y="60" width="16" height="30" fill="#78350f" rx="3"/>
+                            <rect x="26" y="55" width="12" height="12" fill="${state === 'correct' ? '#facc15' : '#78350f'}" stroke="#451a03" stroke-width="2" rx="1"/>
+                            <rect x="62" y="55" width="12" height="12" fill="${state === 'correct' ? '#facc15' : '#78350f'}" stroke="#451a03" stroke-width="2" rx="1"/>
+                        </svg>
+                        <span class="mt-1 bg-amber-950/80 text-amber-200 text-xs font-bold px-2 py-0.5 rounded-md border border-amber-700 shadow">
+                            茅草屋 #${index + 1}
+                        </span>
+                    </div>
+                `;
+                container.appendChild(hutDiv);
+            });
+        }
+
+        // 開啟題目 Modal
+        function openQuizModal(index) {
+            currentHutIndex = index;
+            selectedOption = null;
+            const q = questions[index];
+
+            document.getElementById('modal-hut-tag').innerText = `茅草屋 #${index + 1}`;
+            document.getElementById('quiz-question').innerText = `${index + 1}. ${q.question}`;
+
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+
+            const isAnswered = hutStates[index] !== 'unanswered';
+
+            q.options.forEach((optText, optIdx) => {
+                const optBtn = document.createElement('button');
+                optBtn.className = `w-full text-left p-3.5 rounded-xl border-2 font-medium transition flex items-center justify-between text-sm sm:text-base ${
+                    isAnswered ? 'cursor-not-allowed opacity-80' : 'hover:bg-amber-100/80 active:scale-[0.99]'
+                } border-amber-300 bg-white text-gray-800`;
+
+                optBtn.innerHTML = `
+                    <span>${String.fromCharCode(65 + optIdx)}. ${optText}</span>
+                    <i class="fa-regular fa-circle text-amber-400 opt-icon"></i>
+                `;
+
+                if (!isAnswered) {
+                    optBtn.onclick = () => selectOption(optIdx);
+                } else {
+                    if (optIdx === q.answer) {
+                        optBtn.classList.add('bg-emerald-100', 'border-emerald-500', 'text-emerald-900');
+                        optBtn.querySelector('.opt-icon').className = 'fa-solid fa-circle-check text-emerald-600';
+                    }
+                }
+
+                optionsContainer.appendChild(optBtn);
+            });
+
+            const feedback = document.getElementById('quiz-feedback');
+            const nextBtn = document.getElementById('modal-next-btn');
+
+            if (isAnswered) {
+                feedback.classList.remove('hidden');
+                feedback.className = `mb-4 p-4 rounded-2xl border-2 text-sm leading-relaxed ${
+                    hutStates[index] === 'correct' ? 'bg-emerald-50 border-emerald-300 text-emerald-900' : 'bg-rose-50 border-rose-300 text-rose-900'
+                }`;
+                document.getElementById('feedback-title').innerHTML = hutStates[index] === 'correct' 
+                    ? `<i class="fa-solid fa-circle-check text-emerald-600"></i> 回答正確！` 
+                    : `<i class="fa-solid fa-circle-xmark text-rose-600"></i> 提示說明：`;
+                document.getElementById('feedback-desc').innerText = q.explanation;
+                nextBtn.classList.add('hidden');
+            } else {
+                feedback.classList.add('hidden');
+                nextBtn.classList.add('hidden');
+            }
+
+            document.getElementById('quiz-modal').classList.remove('hidden');
+        }
+
+        // 選擇選項
+        function selectOption(optIdx) {
+            selectedOption = optIdx;
+            const optionsContainer = document.getElementById('quiz-options');
+            const buttons = optionsContainer.querySelectorAll('button');
+
+            buttons.forEach((btn, idx) => {
+                if (idx === optIdx) {
+                    btn.className = 'w-full text-left p-3.5 rounded-xl border-2 font-medium transition flex items-center justify-between text-sm sm:text-base border-amber-600 bg-amber-100/90 text-amber-950 shadow-sm';
+                    btn.querySelector('.opt-icon').className = 'fa-solid fa-circle-dot text-amber-600';
+                } else {
+                    btn.className = 'w-full text-left p-3.5 rounded-xl border-2 font-medium transition flex items-center justify-between text-sm sm:text-base border-amber-300 bg-white text-gray-800';
+                    btn.querySelector('.opt-icon').className = 'fa-regular fa-circle text-amber-400';
+                }
+            });
+
+            const nextBtn = document.getElementById('modal-next-btn');
+            nextBtn.classList.remove('hidden');
+        }
+
+        // 確認提交答案
+        function confirmAnswer() {
+            if (selectedOption === null || currentHutIndex === null) return;
+
+            const q = questions[currentHutIndex];
+            const isCorrect = selectedOption === q.answer;
+
+            closeQuizModal();
+
+            if (isCorrect) {
+                hutStates[currentHutIndex] = 'correct';
+                scoreCount++;
+                playSound('correct');
+                
+                // 答對時：跳出美女圖獎勵 Modal
+                showBeautyReward(currentHutIndex, q.explanation);
+            } else {
+                hutStates[currentHutIndex] = 'incorrect';
+                playSound('wrong');
+                
+                // 答錯時：重新打開 Modal 顯示正確答案解析
+                openQuizModal(currentHutIndex);
+            }
+
+            answeredCount++;
+            document.getElementById('score-text').innerText = scoreCount;
+            renderMap();
+
+            // 如果答錯且已是最後一題，則觸發結算
+            if (!isCorrect && answeredCount >= 10) {
+                setTimeout(showFinalResult, 600);
+            }
+        }
+
+        // 展示美女圖獎勵 Modal
+        function showBeautyReward(index, explanation) {
+            const rewardModal = document.getElementById('reward-modal');
+            const imgEl = document.getElementById('reward-img');
+            const captionEl = document.getElementById('reward-img-caption');
+            const explanationEl = document.getElementById('reward-explanation');
+
+            // 依據題目索引獲取美女圖片，確保每題都有專屬精美圖片
+            const beautyData = beautyImages[index % beautyImages.length];
+
+            imgEl.src = beautyData.url;
+            captionEl.innerText = beautyData.caption;
+            explanationEl.innerText = explanation;
+
+            rewardModal.classList.remove('hidden');
+        }
+
+        // 關閉美女圖獎勵 Modal
+        function closeRewardModal() {
+            document.getElementById('reward-modal').classList.add('hidden');
+
+            // 如果全部做答完畢，開啟最終結算
+            if (answeredCount >= 10) {
+                setTimeout(showFinalResult, 400);
+            }
+        }
+
+        function closeQuizModal() {
+            document.getElementById('quiz-modal').classList.add('hidden');
+        }
+
+        // 顯示最終結算彈窗
+        function showFinalResult() {
+            const resultModal = document.getElementById('result-modal');
+            const iconContainer = document.getElementById('result-icon-container');
+            const titleEl = document.getElementById('result-title');
+            const scoreInfoEl = document.getElementById('result-score-info');
+            const descEl = document.getElementById('result-desc');
+            const actionsEl = document.getElementById('result-actions');
+
+            scoreInfoEl.innerText = `最終成績：答對 ${scoreCount} / 10 題`;
+
+            if (scoreCount >= 8) {
+                // 通關成功 (>= 8題)
+                playSound('win');
+                iconContainer.className = 'w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center text-5xl shadow-inner bg-emerald-100 text-emerald-600 border-4 border-emerald-400';
+                iconContainer.innerHTML = '<i class="fa-solid fa-trophy animate-bounce"></i>';
+                
+                titleEl.innerText = '恭喜順利通過第一關！';
+                titleEl.className = 'text-2xl font-black mb-2 text-emerald-800';
+                
+                descEl.innerText = '太棒了！村莊因你傳播的性別平權知識而煥然一新，村民們開始相互尊重與合作。準備好迎接下一關的挑戰了嗎？';
+                
+                actionsEl.innerHTML = `
+                    <a href="level2.html" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 px-6 rounded-2xl shadow-lg transition active:scale-95 flex items-center justify-center gap-2 text-lg">
+                        前往下一關 <i class="fa-solid fa-circle-arrow-right"></i>
+                    </a>
+                `;
+            } else {
+                // 通關失敗 (< 8題)
+                iconContainer.className = 'w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center text-5xl shadow-inner bg-rose-100 text-rose-600 border-4 border-rose-300';
+                iconContainer.innerHTML = '<i class="fa-solid fa-heart-crack"></i>';
+                
+                titleEl.innerText = '挑戰失敗，再接再厲！';
+                titleEl.className = 'text-2xl font-black mb-2 text-rose-800';
+                
+                descEl.innerText = '村莊裡還有些性別刻板印象需要被破除喔！你需要答對 8 題以上才能順利晉級。重新複習一下知識再試一次吧！';
+                
+                actionsEl.innerHTML = `
+                    <button onclick="restartGame()" class="w-full bg-amber-500 hover:bg-amber-600 text-amber-950 font-black py-3 px-6 rounded-2xl shadow-lg transition active:scale-95 flex items-center justify-center gap-2 text-lg border-2 border-amber-600">
+                        <i class="fa-solid fa-rotate-right"></i> 重新挑戰
+                    </button>
+                `;
+            }
+
+            resultModal.classList.remove('hidden');
+        }
+
+        // 重新挑戰（重新載入頁面）
+        function restartGame() {
+            window.location.reload();
+        }
+
+        // 頁面初始化
+        window.onload = function() {
+            renderMap();
+        };
+    </script>
+</body>
+</html>
